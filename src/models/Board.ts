@@ -25,6 +25,7 @@ export interface IBoard {
 export class Board implements IBoard {
 
     cells: Cell[][] = []
+    currentPlayer: FigureColors = FigureColors.WHITE
 
     constructor() {
         this.initCells()
@@ -45,15 +46,27 @@ export class Board implements IBoard {
         this.addBishops()
         this.addKings()
         this.addKnights()
-        // this.addPawns()
+        this.addPawns()
         this.addQueens()
         this.addRooks()
     }
 
     moveFigureFromTo(fromCell: ICell, toCell: ICell) {
+        
         if (this.canMove(fromCell, toCell)) {
             toCell.figure = fromCell.figure
             fromCell.figure = null
+
+            if (this.currentPlayer === FigureColors.BLACK){
+                this.currentPlayer = FigureColors.WHITE
+            }
+            else {
+                this.currentPlayer = FigureColors.BLACK
+            }
+
+            if (toCell.figure?.isFirstMove) {
+                toCell.figure.isFirstMove = false
+            }
         }
     }
 
@@ -78,23 +91,69 @@ export class Board implements IBoard {
                     return true
                 }
                 break
+            case FigureNames.BISHOP:
+                if (this.isEmptyDiagonal(fromCell, toCell)) {
+                    return true
+                }
+                break
+            case FigureNames.ROOK:
+                if (this.isEmptyVertical(fromCell, toCell)) {
+                    return true
+                }
+                if (this.isEmptyHorizontal(fromCell, toCell)) {
+                    return true
+                }
+                break
             case FigureNames.PAWN:
-                if (fromCell.color == "black") {
-                    if (fromCell.x) {
-
+                if (fromCell.figure.color === FigureColors.BLACK) {
+                    if ((fromCell.y + 1 === toCell.y || (fromCell.y + 2 === toCell.y && fromCell.figure.isFirstMove)) && !toCell.figure && fromCell.x === toCell.x) {
+                        return true
+                    }
+                    if (toCell.figure && fromCell.y + 1 === toCell.y && (fromCell.x + 1 === toCell.x || fromCell.x - 1 === toCell.x)) {
+                        return true
                     }
                 }
+                else {
+                    if ((fromCell.y - 1 === toCell.y || (fromCell.y - 2 === toCell.y && fromCell.figure.isFirstMove)) && !toCell.figure && fromCell.x === toCell.x) {
+                        return true
+                    }
+                    if (toCell.figure && fromCell.y - 1 === toCell.y && (fromCell.x + 1 === toCell.x || fromCell.x - 1 === toCell.x)) {
+                        return true
+                    }
+                }
+                break
+            case FigureNames.KNIGHT:
+
+                if (toCell.y == fromCell.y + 2 && toCell.x == fromCell.x + 1)
+                    return true
+                if (toCell.y == fromCell.y - 2 && toCell.x == fromCell.x + 1)
+                    return true
+                if (toCell.y == fromCell.y + 2 && toCell.x == fromCell.x - 1)
+                    return true
+                if (toCell.y == fromCell.y - 2 && toCell.x == fromCell.x - 1)
+                    return true
+
+                if (toCell.y == fromCell.y + 1 && toCell.x == fromCell.x + 2)
+                    return true
+                if (toCell.y == fromCell.y - 1 && toCell.x == fromCell.x + 2)
+                    return true
+                if (toCell.y == fromCell.y + 1 && toCell.x == fromCell.x - 2)
+                    return true
+                if (toCell.y == fromCell.y - 1 && toCell.x == fromCell.x - 2)
+                    return true
                 break
         }
 
         return false
     }
 
-    highlightAvailableMoves(cell: Cell) {
+    highlightAvailableMoves(cell: Cell | null) {
+
         for (let y = 0; y < 8; y++) {
             for (let x = 0; x < 8; x++) {
 
-                if (cell.figure === null) {
+
+                if (!cell || cell.figure === null) {
                     this.cells[y][x].available = false
                     continue
                 }
@@ -168,7 +227,7 @@ export class Board implements IBoard {
     }
     isEmptyDiagonal(fromCell: ICell, toCell: Cell): boolean {
 
-        if (fromCell.x - fromCell.y !== toCell.x - toCell.y && 8-fromCell.x - 8-fromCell.y !== 8-toCell.y - 8-toCell.x ) {
+        if (fromCell.x - fromCell.y !== toCell.x - toCell.y && 8 - fromCell.x - 8 - fromCell.y !== 8 - toCell.y - 8 - toCell.x) {
             return false
         }
 

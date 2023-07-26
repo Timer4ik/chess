@@ -5,40 +5,38 @@ import { ICell } from '../models/Cell'
 const BoardComponent = () => {
 
 
-    const [board, setBoard] = useState<IBoard>(new Board())
+    const [board, setBoard] = useState<Board>(new Board())
     const [selectedCell, setSelectedCell] = useState<ICell | null>()
 
     function updateBoard() {
-        const newBoard = new Board()
-        newBoard.cells = board.cells
 
-        setBoard(newBoard)
+        setBoard(board)
     }
 
     function handleSelectCell(cell: ICell) {
 
-        if (!selectedCell) {
+        if (!selectedCell && cell.figure) {
+            if (cell?.figure.color !== board.currentPlayer){
+                return
+            }
+        }
+
+        if (selectedCell && cell.available) {
+            board.moveFigureFromTo(selectedCell, cell)
+            board.highlightAvailableMoves(null)
+            setSelectedCell(null)
+        }
+        else if (cell.figure) {
+            board.highlightAvailableMoves(cell)
+            setSelectedCell(cell)
+        }
+        else {
+            setSelectedCell(null)
             board.highlightAvailableMoves(cell)
         }
-
-        if (!cell.figure || cell.available) {
-
-            if (selectedCell) board.moveFigureFromTo(selectedCell, cell)
-
-            setSelectedCell(null)
-
-            if (selectedCell) {
-                board.highlightAvailableMoves(selectedCell)
-            }
-
-            return
-        }
-
         updateBoard()
 
-        
 
-        setSelectedCell(cell)
     }
 
     const isSelectedCell = (cell: ICell) => cell.id === selectedCell?.id
